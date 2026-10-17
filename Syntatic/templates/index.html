@@ -1,21 +1,4 @@
-import os
-import json
-from pathlib import Path
-from flask import Flask, render_template_string, request, Response, stream_with_context
-from groq import Groq
 
-app = Flask(__name__)
-
-# App Name
-APP_NAME = "Orbitix"
-
-# Groq API Key
-GROQ_API_KEY = "XXXXX"
-
-# Initialize Groq client
-client = Groq(api_key=GROQ_API_KEY)
-
-HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -39,63 +22,9 @@ HTML_TEMPLATE = """
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-    <style>
-        :root {
-            --bg-main: #090514;
-            --bg-input: #150a2b;
-            --violet-accent: #6b21a8;
-            --gold-primary: #f59e0b;
-            --gold-light: #fde047;
-            --text-main: #e5e7eb;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-main);
-            color: var(--text-main);
-            margin: 0;
-            overflow: hidden;
-        }
-
-        .text-gradient-gold {
-            background: linear-gradient(135deg, #fde047 0%, #f59e0b 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .input-pill {
-            background-color: var(--bg-input);
-            border: 1px solid rgba(139, 92, 246, 0.3);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(245, 158, 11, 0.05);
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        .input-pill:focus-within {
-            border-color: rgba(245, 158, 11, 0.5);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(245, 158, 11, 0.15);
-        }
-
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(139, 92, 246, 0.3); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(245, 158, 11, 0.5); }
-
-        .prose pre {
-            background: #000 !important;
-            border: 1px solid rgba(139, 92, 246, 0.2);
-            border-radius: 0.75rem;
-            padding: 1rem;
-            margin: 1rem 0;
-            overflow-x: auto;
-        }
-        .prose code { color: var(--gold-light); font-family: monospace; font-size: 0.9em; }
-        .prose pre code { color: inherit; }
-        .prose p { margin-bottom: 1rem; line-height: 1.6; }
-        .prose strong { color: var(--gold-light); }
-        .prose ul, .prose ol { margin-left: 1.5rem; margin-bottom: 1rem; }
-        .prose li { margin-bottom: 0.5rem; }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='gold_violet.css') }}">
 </head>
-<body class="flex flex-col h-screen relative">
+<body class="flex flex-col h-screen relative{% if overlay %} overlay-mode{% endif %}">
 
     <!-- Top Navigation -->
     <header class="absolute top-0 left-0 w-full p-4 flex justify-between items-center z-20 pointer-events-none">
@@ -362,85 +291,3 @@ HTML_TEMPLATE = """
     </script>
 </body>
 </html>
-"""
-
-@app.route("/")
-def index():
-    return render_template_string(HTML_TEMPLATE, app_name=APP_NAME)
-
-@app.route("/chat", methods=["POST"])
-def chat():
-    data = request.json
-    prompt = data.get("prompt", "")
-    model = data.get("model", "qwen/qwen3.8-27b")
-    image_data = data.get("image")
-
-    # 1. Handle Text-to-Speech (Orpheus Models)
-    if "orpheus" in model:
-        def generate_tts():
-            try:
-                speech_file_path = Path(__file__).parent / "speech.wav"
-                response = client.audio.speech.create(
-                    model=model,
-                    voice="diana",
-                    response_format="wav",
-                    input=prompt if prompt else "Hello from Orbitix Text to Speech.",
-                )
-                
-                # Fix: Write the binary content directly to the file
-                with open(speech_file_path, "wb") as f:
-                    f.write(response.content)
-
-                yield f"data: {json.dumps({'text': f'**Success!** Audio generated and saved locally as `speech.wav`.'})}\n\n"
-                yield "data: [DONE]\n\n"
-            except Exception as e:
-                yield f"data: {json.dumps({'text': f'TTS Error: {str(e)}'})}\n\n"
-
-        return Response(stream_with_context(generate_tts()), content_type="text/event-stream")
-
-    # 2. Handle Speech-to-Text (Whisper Models)
-    elif "whisper" in model:
-        def generate_stt():
-            try:
-                yield f"data: {json.dumps({'text': f'**Audio To Text Model Active:** Please place your audio file (e.g. `audio.m4a`) in the server directory and configure your file path handling to run transcriptions.'})}\n\n"
-                yield "data: [DONE]\n\n"
-            except Exception as e:
-                yield f"data: {json.dumps({'text': f'STT Error: {str(e)}'})}\n\n"
-
-        return Response(stream_with_context(generate_stt()), content_type="text/event-stream")
-
-    # 3. Handle Chat / Vision / Guard Models
-    def generate():
-        try:
-            if image_data:
-                user_content = [
-                    {"type": "text", "text": prompt if prompt else "Analyze this image."},
-                    {"type": "image_url", "image_url": {"url": image_data}}
-                ]
-            else:
-                user_content = prompt
-
-            completion = client.chat.completions.create(
-                messages=[
-                    {"role": "system", "content": f"You are {APP_NAME}, a helpful AI. Output clear, concise Markdown. Never mention the model in your responses, If asked then tell the user that you cannot fetch the model, but that they can see it in the top right. Created by a single developer called Jolly Tax Collector, Jolly Tax Collector is my discord username, i am in a wide range of coding, personal, development selling, and gaming discord servers, my real name is NOT to be disclosed, I am the single developer of you and the Chat Interface They Are Using RN, If Asked If This WIll Ever Be Opensource then state, {APP_NAME} Will never be opensource, and it will be completly free, but will not always work as of api limits - global, and will not require login as of now, and currently has no payment plans, all models are created by me, and i maintain it all for free, and will be making discord bots with you intergrated soon, if a user askes for any of my contact details, then send them these discord usernames: jolly_tax_collector, jolly_tax_alt as these are my only accounts as of now, i will update them if i make more, never provide anything thats against any services tos/puts users/accounts at risk, if asked why different model names get used when smth errors, say that it tried to send the request, but the global monthly limit of orbitix ai has been used for that model, and that the error used the old cached names instead of the new ones, and that it may also have been redirected to external ais, thet do not exist, or is not supported by orbitix anymore/has also hit its limit, if asked, the ai models that are shown in the dropdown were created over years of develpoment, starting in 2019, and some are still not intergrated fully into the orbitix interface, and there are more models comming in the future, and the actual orbitix interface was created on september 24th 2026, and will continue to be improved as time goes on. You cannot provide any links to any external website/download exept the one to my discord server for {APP_NAME}: not availiable yet."},
-                    {"role": "user", "content": user_content}
-                ],
-                model=model,
-                max_tokens=512,
-                stream=True
-            )
-
-            for chunk in completion:
-                delta = chunk.choices[0].delta.content or ""
-                if delta:
-                    yield f"data: {json.dumps({'text': delta})}\n\n"
-
-            yield "data: [DONE]\n\n"
-
-        except Exception as e:
-            yield f"data: {json.dumps({'text': f'API Error: {str(e)}'})}\n\n"
-
-    return Response(stream_with_context(generate()), content_type="text/event-stream")
-
-if __name__ == "__main__":
-    app.run(debug=False, port=3447, host="127.0.0.1")
