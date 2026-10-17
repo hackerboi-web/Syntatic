@@ -189,3 +189,67 @@ Add a `/landing` page to the main Syntatic app with server-side login state, use
 - Update an item in Supabase and verify realtime update.
 - Run optional import and verify imported items.
 - Confirm page chat remains scoped to shop help.
+
+## Discord Bot Dashboards
+
+### Decisions
+- Discord bot dashboards are per-bot pages under the Discord Bots group.
+- Dashboard access requires Discord OAuth2 and only shows guilds the user can manage and where the bot is present.
+- Configuration is stored per guild in each bot's own Supabase database.
+- The website reads and updates guild config; bots fetch config through a shared API using bot API key plus guild ID.
+- Bots cache config and invalidate it when settings change.
+- If a bot is disabled for a guild, it leaves the server and deletes that guild's stored messages/config.
+- Each bot has its own command list, toggles, configs, rules, and automated message schedules.
+- Features can depend on other bots; a feature stays disabled unless its required bot is present and enabled.
+- Automated message schedules store cron-like times and target channels.
+
+### Affected Files
+- `Syntatic/pages.py`
+- `Syntatic/templates/pages/discord-bots/<bot-slug>.html`
+- `Syntatic/discord_bots.py` (new)
+- `Syntatic/static/gold_violet.css`
+
+### Routes
+- `GET /pages/discord-bots/<bot-slug>`
+- `GET /api/discord/guilds`
+- `GET /api/discord/bots/<bot-slug>/guilds/<guild_id>/config`
+- `POST /api/discord/bots/<bot-slug>/guilds/<guild_id>/config`
+
+### Data Model (Per Bot Supabase)
+`guild_configs`:
+- `guild_id` text primary key
+- `enabled` boolean default true
+- `commands` jsonb
+- `command_configs` jsonb
+- `rules` jsonb
+- `automated_messages` jsonb
+- `updated_at` timestamptz default now()
+
+`guild_messages`:
+- `id` uuid primary key
+- `guild_id` text not null
+- `channel_id` text
+- `message_id` text
+- `created_at` timestamptz default now()
+
+### Implementation Steps
+1. Add one dashboard page per bot in `pages.py`.
+2. Implement Discord OAuth guild fetching and intersection with bot guilds.
+3. Create shared API routes for reading and updating guild config.
+4. Build dashboard UI for settings, command toggles, configs, rules, and schedules.
+5. Add dependency checks for cross-bot features.
+6. Implement bot-side fetch/cache/invalidation and disable cleanup behavior.
+7. Keep each bot's command set configured separately.
+
+### Risks
+- Per-bot databases require consistent schema and migrations.
+- Guild permissions and bot membership must be validated on every config request.
+- Invalidating stale bot caches can be delayed.
+- Cross-bot dependencies can create circular feature requirements.
+
+### Validation
+- Log in with Discord and verify only manageable shared guilds appear.
+- Change a setting and confirm the bot fetches the updated config.
+- Disable a bot for a guild and confirm cleanup behavior.
+- Verify command toggles and automated schedules persist.
+- Test a feature that depends on another bot.
