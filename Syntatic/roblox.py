@@ -42,5 +42,3 @@ def import_items(item_ids):
         except Exception:
             continue
     return imported
-""" filePath">
-/workspace/app/Syntatic/roblox.py

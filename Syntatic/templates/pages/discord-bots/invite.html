@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bot Invites</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='gold_violet.css') }}">
+</head>
+<body class="flex flex-col min-h-screen gap-6 p-8">
+  <a href="{{ url_for('group_page', group='discord-bots') }}" class="text-purple-400 text-sm self-start">Back to Discord Bots</a>
+  <h1 class="text-gradient-gold text-3xl">Bot Invites</h1>
+  <div id="invite-list" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    Loading invites...
+  </div>
+  <script>
+  async function loadInvites() {
+    try {
+      const res = await fetch('/api/invites');
+      const invites = await res.json();
+      const list = document.getElementById('invite-list');
+      list.innerHTML = invites.map(i => `
+        <div class="bg-[#150a2b] border border-purple-900/40 p-4 rounded-xl">
+          <h3 class="text-amber-300">{{ page.model_name }}</h3>
+          <p class="text-sm text-purple-200">Guild: ${i.guild_id}</p>
+          <a href="${i.invite_url}" target="_blank" class="bg-amber-500 text-purple-950 px-3 py-1 rounded-full text-sm mt-2 inline-block">Invite</a>
+          <button onclick="revokeInvite(${i.id})" class="bg-red-900/40 text-red-200 px-3 py-1 rounded-full text-sm mt-2 ml-2">Revoke</button>
+        </div>
+      `).join('');
+    } catch(e) {
+      document.getElementById('invite-list').innerHTML = 'Failed to load invites.';
+    }
+  }
+  async function revokeInvite(id) {
+    const res = await fetch(`/api/invites/${id}`, { method: 'DELETE' });
+    if (res.ok) loadInvites();
+  }
+  loadInvites();
+  </script>
+  <form id="invite-form" class="bg-[#150a2b] border border-purple-900/40 rounded-2xl p-6 mt-6">
+    <h2 class="text-amber-300 text-xl mb-3">Create Invite</h2>
+    <div class="flex flex-col gap-4">
+      <select name="bot_slug" class="bg-[#090514] text-amber-300 rounded-md px-3 py-2">
+        <option value="invite-tracker">Invite Tracker</option>
+        <option value="secret-shop">Secret Shop</option>
+        <option value="secret-sounds">Secret Sounds</option>
+        <option value="server-info-mod">Server Info + Moderation</option>
+        <option value="chat-revive">Chat Revive</option>
+        <option value="server-setup">Server Setup</option>
+        <option value="welcome">Welcome</option>
+        <option value="leveling">Leveling</option>
+        <option value="tickets">Tickets</option>
+        <option value="giveaways">Giveaways</option>
+        <option value="polls">Polls</option>
+        <option value="reminders">Reminders</option>
+        <option value="backup">Backup</option>
+        <option value="analytics-bot">Analytics Bot</option>
+      </select>
+      <input name="guild_id" placeholder="Guild ID" class="bg-transparent text-gray-100 border-b border-purple-900/50 py-2" required>
+      <button class="bg-amber-500 text-purple-950 py-2 rounded-full mt-2">Generate Invite</button>
+    </div>
+  </form>
+  <script>
+  document.getElementById('invite-form').onsubmit = async e => {
+    e.preventDefault();
+    const f = e.target;
+    const bot = f.bot_slug.value;
+    const guild = f.guild_id.value;
+    const res = await fetch('/api/invites', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({bot_slug: bot, guild_id: guild})
+    });
+    if (res.ok) {
+      loadInvites();
+      f.reset();
+    }
+  };
+  </script>
+</body>
+</html>

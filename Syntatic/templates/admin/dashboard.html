@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='gold_violet.css') }}">
+</head>
+<body class="flex flex-col min-h-screen gap-6 p-8">
+  <a href="{{ url_for('landing') }}" class="text-purple-400 text-sm self-start">Back to Landing</a>
+  <h1 class="text-gradient-gold text-3xl">Admin Dashboard</h1>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-4xl">
+    <div class="bg-[#150a2b] border border-purple-900/40 p-4 rounded-xl">
+      <h2 class="text-amber-300 text-xl mb-3">Users</h2>
+      <p class="text-purple-200 text-2xl font-semibold">{{ stats.users }}</p>
+    </div>
+    <div class="bg-[#150a2b] border border-purple-900/40 p-4 rounded-xl">
+      <h2 class="text-amber-300 text-xl mb-3">Orders</h2>
+      <p class="text-purple-200 text-2xl font-semibold">{{ stats.orders }}</p>
+    </div>
+  </div>
+  <div class="mt-6 space-y-4">
+    <a href="{{ url_for('admin.admin_users') }}" class="w-full bg-amber-500 text-purple-950 py-2 rounded-full text-center">Manage Users</a>
+    <a href="{{ url_for('admin.admin_orders') }}" class="w-full bg-amber-500 text-purple-950 py-2 rounded-full text-center">Manage Orders</a>
+    <a href="{{ url_for('admin.admin_uptime') }}" class="w-full bg-amber-500 text-purple-950 py-2 rounded-full text-center">View Uptime</a>
+    <a href="{{ url_for('admin.admin_audit') }}" class="w-full bg-amber-500 text-purple-950 py-2 rounded-full text-center">View Audit Log</a>
+  </div>
+</body>
+</html>

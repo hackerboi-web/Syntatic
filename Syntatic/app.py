@@ -4,12 +4,24 @@ from Syntatic.auth import auth_bp, login_required
 from Syntatic.pages import GROUPS, find_page
 from Syntatic.chat import chat_bp, settings_for, get_supabase
 from Syntatic.roblox import fetch_items, import_items
+from Syntatic.discord_bots import discord_bots_bp
+from Syntatic.uptime import uptime_bp
+from Syntatic.invites import invites_bp
+from Syntatic.orders import orders_bp
+from Syntatic.admin import admin_bp
+from Syntatic.payments import payments_bp
+from Syntatic.Orbitix import orbitix_bp
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-me")
 app.register_blueprint(auth_bp, url_prefix="/auth")
 app.register_blueprint(chat_bp)
-from Syntatic.Orbitix import orbitix_bp
+app.register_blueprint(discord_bots_bp)
+app.register_blueprint(uptime_bp)
+app.register_blueprint(invites_bp)
+app.register_blueprint(orders_bp)
+app.register_blueprint(admin_bp)
+app.register_blueprint(payments_bp)
 app.register_blueprint(orbitix_bp, url_prefix="/orbitix")
 
 
@@ -83,5 +95,3 @@ def roblox_import():
 
 if __name__ == "__main__":
     app.run(debug=False, port=3447, host="127.0.0.1")
-""" filePath">
-/workspace/app/Syntatic/app.py

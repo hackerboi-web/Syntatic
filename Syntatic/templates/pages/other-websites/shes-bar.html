@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shes Bar</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='gold_violet.css') }}">
+</head>
+<body class="flex flex-col min-h-screen gap-6 p-8">
+  <a href="{{ url_for('group_page', group='other-websites') }}" class="text-purple-400 text-sm self-start">Back to Other Websites</a>
+  <h1 class="text-gradient-gold text-3xl">Shes Bar</h1>
+  <p class="text-purple-200 w-full max-w-4xl">Welcome to Shes Bar – a cozy spot for drinks, bites, and good vibes.</p>
+  <div class="w-full max-w-4xl bg-[#150a2b] border border-purple-900/40 rounded-2xl p-4 mt-4">
+    <p class="text-purple-200">Explore our menu, make reservations, or find directions.</p>
+    <a href="https://example.com/shes-bar" target="_blank" class="bg-amber-500 text-purple-950 py-1 px-3 rounded-full text-sm inline-block mt-2">Visit Website</a>
+  </div>
+  {% include 'components/chat_overlay.html' %}
+</body>
+</html>

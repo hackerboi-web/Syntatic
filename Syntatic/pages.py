@@ -73,5 +73,3 @@ def find_page(group, slug):
         if page["slug"] == slug:
             return page, group_data
     return None
-""" filePath">
-/workspace/app/Syntatic/pages.py

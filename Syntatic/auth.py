@@ -105,5 +105,3 @@ def discord_callback():
     session["user_id"] = user["id"]
     session["username"] = user["username"]
     return redirect(url_for("landing"))
-""" filePath">
-/workspace/app/Syntatic/auth.py

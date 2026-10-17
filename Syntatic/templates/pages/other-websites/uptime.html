@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Uptime Monitor</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='gold_violet.css') }}">
+</head>
+<body class="flex flex-col min-h-screen gap-6 p-8">
+  <a href="{{ url_for('group_page', group='other-websites') }}" class="text-purple-400 text-sm self-start">Back to Other Websites</a>
+  <h1 class="text-gradient-gold text-3xl">Uptime Monitor</h1>
+  <div class="flex flex-wrap gap-4 w-full max-w-4xl">
+    {% for svc, pct in services.items() %}
+    <div class="bg-[#150a2b] border border-purple-900/40 p-4 rounded-xl flex-1 min-w-[160px]">
+      <p class="text-purple-300 text-sm">{{ svc }}</p>
+      <p class="text-amber-300 text-2xl font-semibold">{{ "%.2f"|format(pct) }}%</p>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="w-full max-w-4xl mt-4 bg-[#150a2b] border border-purple-900/40 rounded-2xl p-6">
+    <h2 class="text-amber-300 text-xl mb-3">Recent Checks</h2>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm text-purple-200">
+        <thead class="text-purple-400 border-b border-purple-900/40">
+          <tr><th class="text-left py-2">Service</th><th class="text-left py-2">Status</th><th class="text-left py-2">Latency</th><th class="text-left py-2">Checked</th></tr>
+        </thead>
+        <tbody>
+          {% for c in uptime_data %}
+          <tr class="border-b border-purple-900/20">
+            <td class="py-2">{{ c.service_name }}</td>
+            <td class="py-2 {{ 'text-green-400' if c.status == 'up' else 'text-red-400' }}">{{ c.status }}</td>
+            <td class="py-2">{{ c.latency_ms }}ms</td>
+            <td class="py-2">{{ c.checked_at }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <script>
+  setInterval(() => { location.reload(); }, 60000);
+  </script>
+  {% include 'components/chat_overlay.html' %}
+</body>
+</html>

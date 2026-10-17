@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ page.title }}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='gold_violet.css') }}">
+</head>
+<body class="flex flex-col min-h-screen gap-6 p-8" style="overflow-x:hidden">
+  <a href="{{ url_for('group_page', group='discord-bots') }}" class="text-purple-400 text-sm self-start">Back to Discord Bots</a>
+  <div class="flex items-center justify-between w-full max-w-4xl">
+    <h1 class="text-gradient-gold text-3xl">{{ page.title }}</h1>
+    <span class="text-purple-300 text-sm">Bot: {{ page.model_name }}</span>
+  </div>
+  <p class="text-purple-200 w-full max-w-4xl">{{ page.description }}</p>
+  <nav class="flex flex-wrap gap-2 w-full max-w-4xl">
+    {% for s in sections %}
+    <a href="{{ url_for('discord_bots.bot_dashboard', bot_slug=bot_slug, section=s) }}"
+       class="px-4 py-1.5 rounded-full text-sm {{ 'bg-amber-500 text-purple-950' if s == section else 'bg-[#150a2b] border border-purple-900/40 text-purple-200 hover:border-amber-500/50' }}">{{ s|capitalize }}</a>
+    {% endfor %}
+  </nav>
+  <div class="w-full max-w-4xl bg-[#150a2b] border border-purple-900/40 rounded-2xl p-6">
+    {% if section == 'overview' %}
+      <h2 class="text-amber-300 text-xl mb-3">Overview</h2>
+      <p class="text-purple-200">Bot status and high-level stats for {{ page.model_name }}.</p>
+      <div id="guild-list" class="mt-4 text-purple-300">Loading guilds...</div>
+      <script>
+      fetch("/api/discord/bots/{{ bot_slug }}/guilds")
+        .then(r => r.json()).then(d => {
+          const list = document.getElementById("guild-list");
+          list.innerHTML = (d.guilds || []).length
+            ? (d.guilds.map(g => "<div class='py-1'>" + (g.name || g.id) + "</div>").join(""))
+            : "<div>No shared manageable guilds found.</div>";
+        });
+      </script>
+    {% elif section == 'settings' %}
+      <h2 class="text-amber-300 text-xl mb-3">Settings</h2>
+      <p class="text-purple-200">Configure {{ page.model_name }} for a guild.</p>
+      <form id="config-form" class="flex flex-col gap-3 mt-4">
+        <input type="hidden" name="guild_id" placeholder="Guild ID" class="bg-transparent text-gray-100 border-b border-purple-900/50 py-2">
+        <textarea name="commands" class="bg-[#090514] text-gray-100 border border-purple-900/40 rounded-md p-3 h-32" placeholder='{"hello": {"enabled": true}}'></textarea>
+        <button class="bg-amber-500 text-purple-950 py-2 rounded-full self-start">Save Config</button>
+      </form>
+      <script>
+      document.getElementById("config-form").onsubmit = async e => {
+        e.preventDefault();
+        const form = e.target;
+        const guild = form.guild_id.value;
+        const commands = JSON.parse(form.commands.value || "{}");
+        const res = await fetch("/api/discord/bots/{{ bot_slug }}/guilds/" + guild + "/config", {
+          method: "POST", headers: {"Content-Type":"application/json"},
+          body: JSON.stringify({commands})
+        });
+        alert(res.ok ? "Saved" : "Failed");
+      };
+      </script>
+    {% elif section == 'commands' %}
+      <h2 class="text-amber-300 text-xl mb-3">Commands</h2>
+      <p class="text-purple-200">Toggle commands and configure options for {{ page.model_name }}.</p>
+      <div id="commands-ui" class="mt-4 text-purple-300">Command config editor.</div>
+    {% elif section == 'rules' %}
+      <h2 class="text-amber-300 text-xl mb-3">Rules</h2>
+      <p class="text-purple-200">Automod and server rules for {{ page.model_name }}.</p>
+      <div id="rules-ui" class="mt-4 text-purple-300">Rules editor.</div>
+    {% elif section == 'logs' %}
+      <h2 class="text-amber-300 text-xl mb-3">Logs</h2>
+      <p class="text-purple-200">Recent command and automation logs.</p>
+      <div id="logs-ui" class="mt-4 text-purple-300">Loading logs...</div>
+      <script>
+      fetch("/api/discord/bots/{{ bot_slug }}/guilds/")
+        .then(r => r.json()).then(d => {});
+      </script>
+    {% elif section == 'permissions' %}
+      <h2 class="text-amber-300 text-xl mb-3">Permissions</h2>
+      <p class="text-purple-200">Per-guild permission overrides for {{ page.model_name }}.</p>
+      <div id="perms-ui" class="mt-4 text-purple-300">Permissions editor.</div>
+    {% elif section == 'automation' %}
+      <h2 class="text-amber-300 text-xl mb-3">Automation</h2>
+      <p class="text-purple-200">Configure automated message schedules and triggers.</p>
+      <div id="automation-ui" class="mt-4 text-purple-300">Automation editor.</div>
+    {% endif %}
+  </div>
+  {% include 'components/chat_overlay.html' %}
+</body>
+</html>

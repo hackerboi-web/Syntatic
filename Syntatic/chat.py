@@ -110,5 +110,3 @@ def page_chat(group, slug):
             yield "data: [DONE]\n\n"
 
     return Response(__import__("flask").stream_with_context(generate()), content_type="text/event-stream")
-""" filePath">
-/workspace/app/Syntatic/chat.py

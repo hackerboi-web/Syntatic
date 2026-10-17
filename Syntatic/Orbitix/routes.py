@@ -61,5 +61,3 @@ def chat():
         except Exception as e:
             yield f"data: {json.dumps({'text': f'API Error: {str(e)}'})}\n\n"
     return Response(stream_with_context(generate()), content_type="text/event-stream")
-""" filePath">
-/workspace/app/Syntatic/Orbitix/routes.py

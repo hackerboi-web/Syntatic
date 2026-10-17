@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Users</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='gold_violet.css') }}">
+</head>
+<body class="flex flex-col min-h-screen gap-6 p-8">
+  <a href="{{ url_for('admin.admin_dashboard') }}" class="text-purple-400 text-sm self-start">Back to Dashboard</a>
+  <h1 class="text-gradient-gold text-3xl">Admin Users</h1>
+  <div class="overflow-x-auto w-full bg-[#150a2b] border border-purple-900/40 rounded-2xl">
+    <table class="w-full text-sm text-purple-200">
+      <thead class="text-purple-400 border-b border-purple-900/40">
+        <tr><th class="text-left py-3 px-4">Username</th><th class="text-left py-3 px-4">Email</th><th class="text-left py-3 px-4">Created</th></tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr class="border-b border-purple-900/20">
+          <td class="py-3 px-4">{{ u.username }}</td>
+          <td class="py-3 px-4">{{ u.email }}</td>
+          <td class="py-3 px-4">{{ u.created_at }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>
