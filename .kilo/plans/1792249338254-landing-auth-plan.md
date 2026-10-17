@@ -253,3 +253,283 @@ Add a `/landing` page to the main Syntatic app with server-side login state, use
 - Disable a bot for a guild and confirm cleanup behavior.
 - Verify command toggles and automated schedules persist.
 - Test a feature that depends on another bot.
+
+## Uptime Page
+
+### Decisions
+- Uptime page is login-required.
+- External cron calls a Flask health endpoint every minute.
+- Store check results in Supabase with service name, status, latency, and timestamp.
+- Display current status, recent history, and rolling total uptime percentage.
+
+### Affected Files
+- `Syntatic/templates/pages/other-websites/uptime.html` (new)
+- `Syntatic/uptime.py` (new)
+
+### Routes
+- `GET /pages/other-websites/uptime`
+- `POST /api/uptime/check`
+- `GET /api/uptime/history`
+
+### Data Model (Supabase)
+`uptime_checks`:
+- `id` uuid primary key
+- `service_name` text not null
+- `status` text not null
+- `latency_ms` integer
+- `checked_at` timestamptz default now()
+
+### Implementation Steps
+1. Add uptime page entry and template.
+2. Implement health checks for configured services.
+3. Store results and calculate rolling uptime percentage.
+4. Add cron-compatible endpoint.
+5. Add realtime or polling refresh.
+
+### Risks
+- External cron must be configured on Wispbyte.
+- Service endpoints may be unreachable from the host.
+
+### Validation
+- Trigger checks manually and verify results.
+- Confirm uptime percentage calculation.
+- Verify page refreshes status.
+
+## Invite Page
+
+### Decisions
+- Invite page is login-required.
+- It generates and manages Discord bot invite links for guilds the user can manage and where each bot is present.
+- Invites are stored in Supabase with bot, guild, creator, and created timestamp.
+
+### Affected Files
+- `Syntatic/templates/pages/discord-bots/invite.html` (new)
+- `Syntatic/invites.py` (new)
+
+### Routes
+- `GET /pages/discord-bots/invite`
+- `POST /api/invites`
+- `DELETE /api/invites/<id>`
+
+### Data Model (Supabase)
+`bot_invites`:
+- `id` uuid primary key
+- `bot_slug` text not null
+- `guild_id` text not null
+- `created_by` uuid references users(id)
+- `invite_url` text not null
+- `created_at` timestamptz default now()
+
+### Implementation Steps
+1. Add invite page entry and template.
+2. Fetch manageable shared guilds.
+3. Generate invite URLs per bot and guild.
+4. Store and list invites.
+5. Add revoke support.
+
+### Risks
+- Discord permission checks must be revalidated server-side.
+- Invite URLs can be shared beyond intended users.
+
+### Validation
+- Generate an invite and verify it opens Discord.
+- Revoke and verify removal.
+- Confirm only manageable guilds appear.
+
+## Request Page
+
+### Decisions
+- Request page is login-required.
+- It collects custom bot order requirements and creates a Stripe checkout session.
+- Stripe webhook marks the order paid.
+- Orders are stored in a separate Supabase database/table accessible only to the owner.
+- New orders send a Discord webhook notification and optional email.
+
+### Affected Files
+- `Syntatic/templates/pages/discord-bots/request.html` (new)
+- `Syntatic/orders.py` (new)
+- `Syntatic/templates/pages/admin/orders.html` (new)
+
+### Routes
+- `GET /pages/discord-bots/request`
+- `POST /api/orders`
+- `POST /api/stripe/webhook`
+- `GET /admin/orders`
+
+### Data Model (Supabase)
+`custom_orders`:
+- `id` uuid primary key
+- `user_id` uuid references users(id)
+- `requirements` text not null
+- `status` text default 'pending'
+- `stripe_session_id` text
+- `stripe_payment_intent_id` text
+- `created_at` timestamptz default now()
+
+### Implementation Steps
+1. Add request form and order creation.
+2. Create Stripe checkout session server-side.
+3. Handle webhook and mark order paid.
+4. Send Discord/email notification.
+5. Add admin-only orders page.
+
+### Risks
+- Webhook signature verification is required.
+- Admin access must be strictly enforced.
+- Payment and order state can desync.
+
+### Validation
+- Submit a request and complete checkout.
+- Verify webhook updates order status.
+- Verify notification is sent.
+- Verify admin-only access.
+
+## Additional Project Pages
+
+### Decisions
+- Add `shes-bar`, `nalorized-creations`, `shems-cards-and-invitations`, and `naylor-photobooth` as project pages under Other Websites.
+- Each page has its own content template and overlay chat.
+- Each page is login-required and uses a page-specific system prompt and locked model.
+- Additional pages can be added later through `pages.py`.
+
+### Affected Files
+- `Syntatic/pages.py`
+- `Syntatic/templates/pages/other-websites/shes-bar.html` (new)
+- `Syntatic/templates/pages/other-websites/nalorized-creations.html` (new)
+- `Syntatic/templates/pages/other-websites/shems-cards-and-invitations.html` (new)
+- `Syntatic/templates/pages/other-websites/naylor-photobooth.html` (new)
+
+### Routes
+- `GET /pages/other-websites/<slug>`
+
+### Implementation Steps
+1. Add page entries and templates.
+2. Add page-specific prompts and model config.
+3. Reuse shared overlay chat.
+4. Add navigation links from group page.
+
+### Risks
+- Page content and branding need manual authoring.
+- Overlay prompts must be reviewed per page.
+
+### Validation
+- Load each page and verify content.
+- Verify overlay chat works.
+- Verify page navigation.
+
+## Stripe Payments
+
+### Decisions
+- Stripe checkout sessions are generated server-side in Python.
+- Use one generic `orders` table for all purchase types.
+- Products and prices are configured in Supabase and can be added over time.
+- Orbitix has no payments initially, but can use the same order model later.
+- Webhooks fulfill orders and update status.
+
+### Affected Files
+- `Syntatic/payments.py` (new)
+- `Syntatic/templates/checkout.html` (new)
+- `Syntatic/static/gold_violet.css`
+
+### Routes
+- `POST /api/checkout`
+- `POST /api/stripe/webhook`
+- `GET /orders`
+
+### Data Model (Supabase)
+`products`:
+- `id` uuid primary key
+- `name` text not null
+- `description` text
+- `price_cents` integer not null
+- `currency` text default 'usd'
+- `active` boolean default true
+- `created_at` timestamptz default now()
+
+`orders`:
+- `id` uuid primary key
+- `user_id` uuid references users(id)
+- `product_id` uuid references products(id)
+- `product_type` text not null
+- `status` text default 'pending'
+- `stripe_session_id` text
+- `stripe_payment_intent_id` text
+- `amount_cents` integer not null
+- `currency` text not null
+- `created_at` timestamptz default now()
+- `updated_at` timestamptz default now()
+
+### Implementation Steps
+1. Add Stripe configuration from environment.
+2. Implement checkout session creation.
+3. Implement webhook verification and fulfillment.
+4. Add orders history page.
+5. Add product management entries.
+6. Reuse order flow for custom bot requests.
+
+### Risks
+- Webhook endpoint must be public and verified.
+- Payment state and order state can desync.
+- Product pricing changes need careful handling.
+
+### Validation
+- Create checkout and complete test payment.
+- Verify webhook updates order.
+- Verify orders history.
+- Test failed/canceled checkout handling.
+
+## Additional Features
+
+### Decisions
+- Add an admin dashboard for orders, users, and uptime.
+- Add audit logging for config and payment changes.
+- Add global search across pages and items.
+- Add notification preferences in settings.
+- Add backups/export for user data.
+- Add analytics events for page views and purchases.
+
+### Affected Files
+- `Syntatic/admin.py` (new)
+- `Syntatic/templates/admin/dashboard.html` (new)
+- `Syntatic/analytics.py` (new)
+
+### Routes
+- `GET /admin`
+- `GET /admin/users`
+- `GET /admin/orders`
+- `GET /admin/uptime`
+- `POST /api/analytics/event`
+
+### Data Model (Supabase)
+`audit_logs`:
+- `id` uuid primary key
+- `user_id` uuid references users(id)
+- `action` text not null
+- `target_type` text
+- `target_id` text
+- `created_at` timestamptz default now()
+
+`analytics_events`:
+- `id` uuid primary key
+- `user_id` uuid references users(id)
+- `event_name` text not null
+- `metadata` jsonb
+- `created_at` timestamptz default now()
+
+### Implementation Steps
+1. Add admin-only dashboard.
+2. Add audit logging to config and payment actions.
+3. Add analytics event endpoint.
+4. Add user data export.
+5. Add notification preference settings.
+
+### Risks
+- Admin routes require strict authorization.
+- Analytics can grow quickly and need retention.
+- Audit logs must not store secrets.
+
+### Validation
+- Verify admin access restrictions.
+- Verify audit entries are created.
+- Verify analytics events are stored.
+- Verify data export.
