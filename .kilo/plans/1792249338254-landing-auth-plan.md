@@ -132,3 +132,60 @@ Add a `/landing` page to the main Syntatic app with server-side login state, use
 - Change thinking levels and confirm the configured model is used.
 - Confirm Orbitix page still supports model/voice selection.
 - Confirm landing page has no AI overlay before login.
+
+## Roblox Pages
+
+### Decisions
+- Roblox group page uses the existing group template and cards.
+- Roblox cosmetic shop is a browse-only page with item cards, Robux price buttons linking to Roblox item pages, and sale status badges.
+- Items are manually curated in Supabase, with an optional Python import function for configured Roblox item IDs.
+- Shop supports search, filtering, and sorting by status, price, and title.
+- Item images use Supabase Storage bucket `roblox-items`, with external URL fallback.
+- Sale statuses: `for_sale`, `limited`, `ugc`, `offsale`.
+- Realtime updates use a browser Supabase client with anon key and read-only RLS, with page-load fetch as fallback.
+- Roblox page chat uses the shared overlay and is restricted to shop help/info.
+
+### Affected Files
+- `Syntatic/pages.py`
+- `Syntatic/templates/pages/roblox/cosmetic-shop.html` (new)
+- `Syntatic/roblox.py` (new)
+- `Syntatic/static/gold_violet.css`
+
+### Routes
+- `GET /pages/roblox/cosmetic-shop`
+- `GET /api/roblox/items`
+- `POST /api/roblox/import` (optional manual trigger)
+
+### Data Model (Supabase)
+`roblox_items`:
+- `id` uuid primary key
+- `title` text not null
+- `description` text
+- `image_url` text
+- `robux_price` integer
+- `roblox_item_url` text not null
+- `sale_status` text not null
+- `item_type` text
+- `created_at` timestamptz default now()
+- `updated_at` timestamptz default now()
+
+### Implementation Steps
+1. Add Roblox cosmetic shop page entry and template.
+2. Create `roblox_items` table and RLS read policy.
+3. Create Supabase Storage bucket `roblox-items`.
+4. Implement item fetch, search, filter, and sort in the page.
+5. Add Supabase Realtime subscription for item changes.
+6. Implement optional Python import function for configured item IDs.
+7. Add Roblox AI overlay system prompt.
+
+### Risks
+- Roblox public API fields and availability may change.
+- Realtime requires exposing an anon key; RLS must remain read-only.
+- Client-side filtering may need pagination for large catalogs.
+
+### Validation
+- Load shop, verify items render with status badges and price buttons.
+- Test search/filter/sort.
+- Update an item in Supabase and verify realtime update.
+- Run optional import and verify imported items.
+- Confirm page chat remains scoped to shop help.

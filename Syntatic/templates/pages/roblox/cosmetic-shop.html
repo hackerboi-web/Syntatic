@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cosmetic Shop</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='gold_violet.css') }}">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="flex flex-col min-h-screen gap-6 p-8">
+<a href="{{ url_for('group_page', group='roblox') }}" class="text-purple-400 text-sm self-start">Back to group</a>
+<h1 class="text-gradient-gold text-3xl">Roblox Cosmetic Shop</h1>
+<div class="flex flex-wrap gap-3 w-full max-w-5xl">
+  <input id="search" placeholder="Search" class="bg-[#150a2b] text-gray-100 rounded-full px-4 py-2">
+  <select id="status-filter" class="bg-[#150a2b] text-amber-300 rounded-md px-3 py-2">
+    <option value="">All statuses</option>
+    <option value="for_sale">For sale</option>
+    <option value="limited">Limited</option>
+    <option value="ugc">UGC</option>
+    <option value="offsale">Offsale</option>
+  </select>
+  <select id="sort" class="bg-[#150a2b] text-amber-300 rounded-md px-3 py-2">
+    <option value="title">Title</option>
+    <option value="price">Price</option>
+    <option value="status">Status</option>
+  </select>
+</div>
+<div id="items" class="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-5xl"></div>
+<script>
+const SUPABASE_URL = "{{ supabase_url }}";
+const SUPABASE_ANON_KEY = "{{ supabase_anon_key }}";
+const sb = (SUPABASE_URL && SUPABASE_ANON_KEY) ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+let items = [];
+function badge(status) {
+  const colors = {for_sale:'text-green-400', limited:'text-amber-400', ugc:'text-purple-300', offsale:'text-red-400'};
+  return `<span class="${colors[status] || 'text-gray-400'} text-xs">${status}</span>`;
+}
+function render() {
+  const q = document.getElementById('search').value.toLowerCase();
+  const status = document.getElementById('status-filter').value;
+  const sort = document.getElementById('sort').value;
+  let filtered = items.filter(i => (!q || (i.title||'').toLowerCase().includes(q)) && (!status || i.sale_status === status));
+  filtered.sort((a,b) => {
+    if (sort === 'price') return (a.robux_price||0) - (b.robux_price||0);
+    if (sort === 'status') return (a.sale_status||'').localeCompare(b.sale_status||'');
+    return (a.title||'').localeCompare(b.title||'');
+  });
+  document.getElementById('items').innerHTML = filtered.map(i => `
+    <div class="bg-[#150a2b] border border-purple-900/40 p-4 rounded-xl">
+      ${i.image_url ? `<img src="${i.image_url}" class="w-full h-40 object-cover rounded-lg mb-3">` : ''}
+      <h3 class="text-amber-300">${i.title}</h3>
+      <p class="text-sm text-purple-200">${i.description || ''}</p>
+      <div class="flex justify-between items-center mt-3">
+        ${badge(i.sale_status)}
+        <a href="${i.roblox_item_url}" target="_blank" class="bg-amber-500 text-purple-950 px-3 py-1 rounded-full text-sm">${i.robux_price || 0} Robux</a>
+      </div>
+    </div>
+  `).join('');
+}
+async function loadItems() {
+  const res = await fetch('/api/roblox/items');
+  items = await res.json();
+  render();
+}
+document.getElementById('search').addEventListener('input', render);
+document.getElementById('status-filter').addEventListener('change', render);
+document.getElementById('sort').addEventListener('change', render);
+loadItems();
+if (sb) {
+  sb.channel('roblox-items').on('postgres_changes', {event:'*', schema:'public', table:'roblox_items'}, loadItems).subscribe();
+}
+</script>
+{% include 'components/chat_overlay.html' %}
+</body>
+</html>
+""" filePath">
+/workspace/app/Syntatic/templates/pages/roblox/cosmetic-shop.html

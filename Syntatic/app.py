@@ -3,6 +3,7 @@ from flask import Flask, render_template, redirect, url_for, session, request, f
 from Syntatic.auth import auth_bp, login_required
 from Syntatic.pages import GROUPS, find_page
 from Syntatic.chat import chat_bp, settings_for, get_supabase
+from Syntatic.roblox import fetch_items, import_items
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-me")
@@ -43,8 +44,8 @@ def project_page(group, slug):
     key = f"chat:{group}:{slug}"
     history = session.get(key, [])
     if page.get("template"):
-        return render_template(page["template"], group=group, page=page, coming_soon=not page.get("implemented"), username=session.get("username"), chat_history=history)
-    return render_template("page.html", group=group, page=page, coming_soon=not page.get("implemented"), username=session.get("username"), chat_history=history)
+        return render_template(page["template"], group=group, page=page, coming_soon=not page.get("implemented"), username=session.get("username"), chat_history=history, supabase_url=os.environ.get("SUPABASE_URL", ""), supabase_anon_key=os.environ.get("SUPABASE_ANON_KEY", ""))
+    return render_template("page.html", group=group, page=page, coming_soon=not page.get("implemented"), username=session.get("username"), chat_history=history, supabase_url=os.environ.get("SUPABASE_URL", ""), supabase_anon_key=os.environ.get("SUPABASE_ANON_KEY", ""))
 
 
 @app.route("/settings", methods=["GET", "POST"])
@@ -64,6 +65,20 @@ def settings():
         flash("Settings saved")
     settings_data = settings_for(user_id)
     return render_template("settings.html", settings=settings_data, username=session.get("username"))
+
+
+@app.route("/api/roblox/items")
+@login_required
+def roblox_items():
+    return __import__("flask").jsonify(fetch_items())
+
+
+@app.route("/api/roblox/import", methods=["POST"])
+@login_required
+def roblox_import():
+    data = request.json or {}
+    imported = import_items(data.get("item_ids", []))
+    return __import__("flask").jsonify({"imported": imported})
 
 
 if __name__ == "__main__":
