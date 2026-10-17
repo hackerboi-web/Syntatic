@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Syntatic</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='gold_violet.css') }}">
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen gap-6">
+<h1 class="text-gradient-gold text-4xl font-semibold">Syntatic</h1>
+{% if not logged_in %}
+<a href="{{ url_for('auth.login') }}" class="input-pill px-6 py-3 rounded-full text-amber-300">Login</a>
+{% else %}
+<p class="text-purple-200">Welcome, {{ username }}</p>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+{% for key, g in groups.items() %}
+<a href="{{ url_for('group_page', group=key) }}" class="bg-[#150a2b] border border-purple-900/40 p-4 rounded-xl text-purple-200 hover:border-amber-500/50">{{ g.title }}</a>
+{% endfor %}
+</div>
+<form method="post" action="{{ url_for('auth.logout') }}"><button class="text-purple-400 text-sm mt-4">Logout</button></form>
+{% endif %}
+</body>
+</html>
+""" filePath">
+/workspace/app/Syntatic/templates/landing.html

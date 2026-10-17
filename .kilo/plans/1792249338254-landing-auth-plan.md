@@ -10,6 +10,10 @@ Add a `/landing` page to the main Syntatic app with server-side login state, use
 - Email auth: username + password, hashed with `werkzeug.security`
 - Discord auth: OAuth2, store `discord_id` on user row
 - Page groups: static config in `Syntatic/pages.py` (display categories only)
+- Group pages require login and show group description plus page cards
+- Landing shows group buttons only when logged in
+- Groups: Roblox, Discord Bots, Other Websites
+- Unimplemented project pages show disabled "coming soon" cards
 
 ## Affected Files
 - `Syntatic/app.py`
@@ -17,7 +21,8 @@ Add a `/landing` page to the main Syntatic app with server-side login state, use
 - `Syntatic/auth.py` (new blueprint)
 - `Syntatic/templates/landing.html` (new)
 - `Syntatic/templates/login.html` (new)
-- `Syntatic/templates/register.html` (new)
+- `Syntatic/templates/group.html` (new)
+- `Syntatic/templates/page.html` (new placeholder)
 - `Syntatic/static/gold_violet.css` (reuse)
 
 ## Data Model (Supabase)
@@ -35,6 +40,8 @@ Add a `/landing` page to the main Syntatic app with server-side login state, use
 - `GET/POST /auth/register`
 - `GET /auth/discord`
 - `GET /auth/discord/callback`
+- `GET /pages/<group>`
+- `GET /pages/<group>/<slug>`
 - `POST /auth/logout`
 
 ## Implementation Steps
@@ -42,9 +49,10 @@ Add a `/landing` page to the main Syntatic app with server-side login state, use
 2. Create Supabase client helper.
 3. Implement user lookup/create and password hashing.
 4. Add auth blueprint and templates using global gold-on-violet CSS.
-5. Add static `pages.py` with categories and page entries.
-6. Render categories on landing page; show login/logout state.
-7. Protect future pages via session check (helper `login_required`).
+5. Add static `pages.py` with groups, descriptions, and page entries (title, slug, description, implemented flag).
+6. Render group buttons on landing only when logged in.
+7. Add group pages with description, back button, and page cards (disabled coming soon if not implemented).
+8. Add `login_required` decorator and protect group/project pages.
 
 ## Risks
 - Supabase credentials must not be committed; use env vars.

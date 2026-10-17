@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='gold_violet.css') }}">
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen gap-4">
+<h1 class="text-gradient-gold text-3xl">Register</h1>
+<form method="post" class="input-pill p-6 rounded-xl flex flex-col gap-3 w-80">
+<input name="username" placeholder="Username" class="bg-transparent text-gray-100 border-b border-purple-900/50 py-2">
+<input name="email" placeholder="Email" class="bg-transparent text-gray-100 border-b border-purple-900/50 py-2">
+<input name="password" type="password" placeholder="Password" class="bg-transparent text-gray-100 border-b border-purple-900/50 py-2">
+<button class="bg-amber-500 text-purple-950 py-2 rounded-full mt-2">Register</button>
+</form>
+<a href="{{ url_for('auth.login') }}" class="text-purple-400 text-sm">Login</a>
+{% with messages = get_flashed_messages() %}{% if messages %}<p class="text-red-400 text-sm">{{ messages[0] }}</p>{% endif %}{% endwith %}
+</body>
+</html>
+""" filePath">
+/workspace/app/Syntatic/templates/register.html

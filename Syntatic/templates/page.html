@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ page.title if page else 'Page' }}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='gold_violet.css') }}">
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen gap-4">
+<a href="{{ url_for('group_page', group=group) }}" class="text-purple-400 text-sm">Back to group</a>
+{% if coming_soon %}
+<h1 class="text-gradient-gold text-3xl">Coming soon</h1>
+<p class="text-purple-200">{{ page.title }}</p>
+{% else %}
+<h1 class="text-gradient-gold text-3xl">{{ page.title }}</h1>
+<p class="text-purple-200">{{ page.description }}</p>
+{% endif %}
+</body>
+</html>
+""" filePath">
+/workspace/app/Syntatic/templates/page.html

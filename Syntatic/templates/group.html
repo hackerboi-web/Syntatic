@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ group_data.title }}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='gold_violet.css') }}">
+</head>
+<body class="flex flex-col items-center min-h-screen gap-6 p-8">
+<a href="{{ url_for('landing') }}" class="text-purple-400 text-sm self-start">Back to landing</a>
+<h1 class="text-gradient-gold text-3xl">{{ group_data.title }}</h1>
+<p class="text-purple-200">{{ group_data.description }}</p>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-3xl">
+{% for page in group_data.pages %}
+{% if page.implemented %}
+<a href="{{ url_for('project_page', group=group, slug=page.slug) }}" class="bg-[#150a2b] border border-purple-900/40 p-4 rounded-xl text-purple-200 hover:border-amber-500/50">
+{% else %}
+<div class="bg-[#150a2b] border border-purple-900/20 p-4 rounded-xl text-purple-400/50 opacity-60">
+{% endif %}
+<h3 class="text-amber-300">{{ page.title }}</h3>
+<p class="text-sm">{{ page.description }}</p>
+{% if not page.implemented %}<span class="text-xs">Coming soon</span>{% endif %}
+{% if page.implemented %}</a>{% else %}</div>{% endif %}
+{% endfor %}
+</div>
+</body>
+</html>
+""" filePath">
+/workspace/app/Syntatic/templates/group.html
