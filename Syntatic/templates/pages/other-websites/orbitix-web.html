@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ page.title }}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='gold_violet.css') }}">
+</head>
+<body class="flex flex-col items-center min-h-screen gap-6 p-8">
+<a href="{{ url_for('group_page', group=group) }}" class="text-purple-400 text-sm self-start">Back to group</a>
+<h1 class="text-gradient-gold text-3xl">{{ page.title }}</h1>
+<p class="text-purple-200">{{ page.description }}</p>
+<p class="text-purple-300">Orbitix Web brings the Orbitix chat experience to the browser.</p>
+{% include 'components/chat_overlay.html' %}
+</body>
+</html>
+""" filePath">
+/workspace/app/Syntatic/templates/pages/other-websites/orbitix-web.html

@@ -63,3 +63,72 @@ Add a `/landing` page to the main Syntatic app with server-side login state, use
 - Start app locally, load `/landing`, register, login, logout, Discord flow (with test creds).
 - Verify session persists across requests.
 - Verify password hash stored, not plaintext.
+
+## Actual Pages
+
+### Decisions
+- Orbitix page keeps the full chat UI and model/voice dropdown.
+- Other project pages show page content plus a floating chat button that opens an overlay modal; background content is slightly blurred while open.
+- Each page has a page-specific system prompt loaded when the page loads.
+- Each non-Orbitix page is locked to one primary model with per-page Low/Med/Max thinking levels mapped to configured model IDs.
+- Non-Orbitix AI is restricted to page help/info and must not provide code or anything usable against internal or external services.
+- Icons live in `Syntatic/icons/`.
+- Page content lives in `Syntatic/templates/pages/<group>/<slug>.html`; Python files contain only Python code.
+- Overlay chat resets when navigating away, persists on page reload, and auto-saves to Supabase after each response when chat saving is enabled.
+- `/load` restores a prior saved conversation and sends it back to the provider as context.
+- User settings are stored in Supabase.
+
+### Affected Files
+- `Syntatic/pages.py`
+- `Syntatic/templates/pages/<group>/<slug>.html`
+- `Syntatic/templates/components/chat_overlay.html`
+- `Syntatic/chat.py` (new)
+- `Syntatic/templates/settings.html` (new)
+- `Syntatic/static/gold_violet.css`
+- `Syntatic/icons/` (assets added later)
+
+### Routes
+- `GET /pages/<group>/<slug>`
+- `POST /pages/<group>/<slug>/chat`
+- `GET/POST /settings`
+
+### Data Model (Supabase)
+`user_settings`:
+- `user_id` uuid primary key references users(id)
+- `chat_saving_enabled` boolean default false
+- `default_thinking_level` text default 'med'
+
+`chat_sessions`:
+- `id` uuid primary key
+- `user_id` uuid references users(id)
+- `page_key` text not null
+- `created_at` timestamptz default now()
+
+`chat_messages`:
+- `id` uuid primary key
+- `session_id` uuid references chat_sessions(id)
+- `role` text not null
+- `content` text not null
+- `created_at` timestamptz default now()
+
+### Implementation Steps
+1. Extend `pages.py` with per-page model IDs, thinking levels, system prompts, and template paths.
+2. Add page content templates and a shared chat overlay component.
+3. Add modal/blur styles to the global CSS.
+4. Add chat endpoint that validates page and thinking level, builds the page system prompt, streams responses, and auto-saves when enabled.
+5. Add settings page and Supabase-backed user settings.
+6. Implement `/load` handling for saved conversations.
+7. Keep Orbitix page on the original full chat UI.
+
+### Risks
+- Safety is prompt-based and should be reviewed for each page prompt.
+- Misconfigured model IDs or thinking levels can break a page’s chat.
+- Auto-saving stores user conversations; retention/privacy policy should be defined later.
+
+### Validation
+- Open a project page, use the overlay chat, reload, and confirm the conversation persists.
+- Navigate away and back; confirm the conversation resets.
+- Enable chat saving, send messages, use `/load`, and confirm prior messages restore.
+- Change thinking levels and confirm the configured model is used.
+- Confirm Orbitix page still supports model/voice selection.
+- Confirm landing page has no AI overlay before login.

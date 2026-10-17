@@ -1,17 +1,15 @@
 import os
-from flask import Flask, render_template, redirect, url_for, session
+from flask import Flask, render_template, redirect, url_for, session, request, flash
 from Syntatic.auth import auth_bp, login_required
-from Syntatic.pages import GROUPS
+from Syntatic.pages import GROUPS, find_page
+from Syntatic.chat import chat_bp, settings_for, get_supabase
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-me")
 app.register_blueprint(auth_bp, url_prefix="/auth")
+app.register_blueprint(chat_bp)
 from Syntatic.Orbitix import orbitix_bp
 app.register_blueprint(orbitix_bp, url_prefix="/orbitix")
-
-
-def current_user():
-    return session.get("username")
 
 
 @app.route("/")
@@ -38,13 +36,34 @@ def group_page(group):
 @app.route("/pages/<group>/<slug>")
 @login_required
 def project_page(group, slug):
-    group_data = GROUPS.get(group)
-    if not group_data:
+    found = find_page(group, slug)
+    if not found:
         return "Not found", 404
-    page = next((p for p in group_data["pages"] if p["slug"] == slug), None)
-    if not page or not page.get("implemented"):
-        return render_template("page.html", group=group, page=page, coming_soon=True, username=session.get("username"))
-    return render_template("page.html", group=group, page=page, coming_soon=False, username=session.get("username"))
+    page, group_data = found
+    key = f"chat:{group}:{slug}"
+    history = session.get(key, [])
+    if page.get("template"):
+        return render_template(page["template"], group=group, page=page, coming_soon=not page.get("implemented"), username=session.get("username"), chat_history=history)
+    return render_template("page.html", group=group, page=page, coming_soon=not page.get("implemented"), username=session.get("username"), chat_history=history)
+
+
+@app.route("/settings", methods=["GET", "POST"])
+@login_required
+def settings():
+    sb = get_supabase()
+    user_id = session.get("user_id")
+    if request.method == "POST":
+        enabled = request.form.get("chat_saving_enabled") == "on"
+        level = request.form.get("default_thinking_level", "med")
+        if sb:
+            existing = sb.table("user_settings").select("user_id").eq("user_id", user_id).execute()
+            if existing.data:
+                sb.table("user_settings").update({"chat_saving_enabled": enabled, "default_thinking_level": level}).eq("user_id", user_id).execute()
+            else:
+                sb.table("user_settings").insert({"user_id": user_id, "chat_saving_enabled": enabled, "default_thinking_level": level}).execute()
+        flash("Settings saved")
+    settings_data = settings_for(user_id)
+    return render_template("settings.html", settings=settings_data, username=session.get("username"))
 
 
 if __name__ == "__main__":

@@ -18,6 +18,7 @@
 {% endfor %}
 </div>
 <form method="post" action="{{ url_for('auth.logout') }}"><button class="text-purple-400 text-sm mt-4">Logout</button></form>
+<a href="{{ url_for('settings') }}" class="text-purple-400 text-sm">Settings</a>
 {% endif %}
 </body>
 </html>

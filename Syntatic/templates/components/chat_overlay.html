@@ -1,0 +1,77 @@
+<!-- chat overlay component -->
+<button id="chat-fab" class="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-amber-500 text-purple-950 shadow-lg" onclick="openChatOverlay()">Chat</button>
+<div id="chat-overlay" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+  <div class="absolute inset-0 bg-black/40" onclick="closeChatOverlay()"></div>
+  <div class="relative bg-[#090514] w-full max-w-2xl h-[80vh] rounded-2xl border border-purple-900/40 flex flex-col">
+    <div class="p-3 border-b border-purple-900/40 flex justify-between items-center">
+      <span class="text-amber-300 text-sm">Chat</span>
+      <select id="thinking-level" class="bg-[#150a2b] text-amber-300 text-xs rounded-md px-2 py-1">
+        <option value="low">Low</option>
+        <option value="med" selected>Med</option>
+        <option value="max">Max</option>
+      </select>
+      <button onclick="closeChatOverlay()" class="text-purple-400">X</button>
+    </div>
+    <div id="chat-messages" class="flex-1 overflow-y-auto p-4 flex flex-col gap-3"></div>
+    <div class="p-3 border-t border-purple-900/40 flex gap-2">
+      <input id="chat-input" class="flex-1 bg-[#150a2b] text-gray-100 rounded-full px-4 py-2" placeholder="Message...">
+      <button onclick="sendChat()" class="bg-amber-500 text-purple-950 rounded-full px-4">Send</button>
+    </div>
+  </div>
+</div>
+<script>
+const chatEndpoint = "{{ url_for('chat.page_chat', group=group, slug=page.slug) }}";
+let chatHistory = {{ chat_history|tojson if chat_history is defined else '[]' }};
+function renderChat() {
+  const box = document.getElementById('chat-messages');
+  box.innerHTML = '';
+  chatHistory.forEach(m => {
+    const div = document.createElement('div');
+    div.className = m.role === 'user' ? 'text-right text-gray-100' : 'text-left text-purple-200';
+    div.textContent = m.content;
+    box.appendChild(div);
+  });
+  box.scrollTop = box.scrollHeight;
+}
+function openChatOverlay() {
+  document.getElementById('chat-overlay').classList.remove('hidden');
+  document.body.classList.add('overlay-open');
+  renderChat();
+}
+function closeChatOverlay() {
+  document.getElementById('chat-overlay').classList.add('hidden');
+  document.body.classList.remove('overlay-open');
+}
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  chatHistory.push({role:'user', content:text});
+  input.value = '';
+  renderChat();
+  const res = await fetch(chatEndpoint, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({prompt:text, thinking_level: document.getElementById('thinking-level').value})
+  });
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let full = '';
+  chatHistory.push({role:'assistant', content:''});
+  while (true) {
+    const {done, value} = await reader.read();
+    if (done) break;
+    const chunk = decoder.decode(value, {stream:true});
+    chunk.split('\n').forEach(line => {
+      if (line.startsWith('data: ')) {
+        const raw = line.slice(6);
+        if (raw === '[DONE]') return;
+        try { const parsed = JSON.parse(raw); full += parsed.text; chatHistory[chatHistory.length-1].content = full; renderChat(); } catch(e) {}
+      }
+    });
+  }
+}
+renderChat();
+</script>
+""" filePath">
+/workspace/app/Syntatic/templates/components/chat_overlay.html

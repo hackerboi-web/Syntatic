@@ -53,3 +53,4 @@ body {
 .prose li { margin-bottom: 0.5rem; }
 """ filePath">
 /workspace/app/Syntatic/styles/gold_violet.css
+body.overlay-open > *:not(#chat-overlay) { filter: blur(3px); transition: filter 0.2s; }

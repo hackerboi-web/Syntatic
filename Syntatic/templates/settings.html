@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='gold_violet.css') }}">
+</head>
+<body class="flex flex-col items-center min-h-screen gap-6 p-8">
+<a href="{{ url_for('landing') }}" class="text-purple-400 text-sm self-start">Back to landing</a>
+<h1 class="text-gradient-gold text-3xl">Settings</h1>
+<form method="post" class="input-pill p-6 rounded-xl flex flex-col gap-4 w-96">
+<label class="flex items-center gap-2 text-purple-200">
+<input type="checkbox" name="chat_saving_enabled" {% if settings.chat_saving_enabled %}checked{% endif %}> Enable chat saving
+</label>
+<label class="text-purple-200">Default thinking level
+<select name="default_thinking_level" class="bg-[#150a2b] text-amber-300 rounded-md px-3 py-1.5">
+<option value="low" {% if settings.default_thinking_level == 'low' %}selected{% endif %}>Low</option>
+<option value="med" {% if settings.default_thinking_level == 'med' %}selected{% endif %}>Med</option>
+<option value="max" {% if settings.default_thinking_level == 'max' %}selected{% endif %}>Max</option>
+</select>
+</label>
+<button class="bg-amber-500 text-purple-950 py-2 rounded-full">Save</button>
+</form>
+{% with messages = get_flashed_messages() %}{% if messages %}<p class="text-green-400 text-sm">{{ messages[0] }}</p>{% endif %}{% endwith %}
+</body>
+</html>
+""" filePath">
+/workspace/app/Syntatic/templates/settings.html
