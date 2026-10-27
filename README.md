@@ -4,6 +4,10 @@ Syntatic Is A Website Built To House My Project's Websites, It Is Coded In Pytho
 
 # Status:
 
+## Overall Uptime:
+
+[![Status](https://www.sentivel.com/status/syntatic/badge.svg)](https://syntatic.sentivel.com)
+
 ## Syntatic:
 
 [![Syntatic Uptime](https://www.sentivel.com/status/syntatic/badge.svg?component=45620a2d-5694-4548-aa72-e7beefb60b7a)](https://syntatic.sentivel.com)
